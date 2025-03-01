@@ -36,12 +36,14 @@ A Flask-based web application that allows users to register, upload documents, r
 ### 1️⃣ Clone the Repository
 
 sh
+
 git clone https://github.com/pavansaikonga/-Flask-Document-Upload-Matching-System.git
 cd flask-document-matching
 
 ### 2️⃣ Create & Activate a Virtual Environment
 
 sh
+
 python -m venv venv
 
 # Activate virtual environment
@@ -57,11 +59,13 @@ source venv/bin/activate
 ### 3️⃣ Install Dependencies
 
 sh
+
 pip install -r requirements.txt
 
 ### 4️⃣ Initialize Database
 
 sh
+
 python
 
 > > > from app import init_db
