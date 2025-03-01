@@ -76,6 +76,7 @@ python
 ### 5️⃣ Run the Application
 
 sh
+
 python3 app.py
 
 📌 Open your browser and visit:
