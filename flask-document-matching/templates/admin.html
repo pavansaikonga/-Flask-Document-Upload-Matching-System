@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <title>Admin Dashboard</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #ddd;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 900px;
+        margin: 30px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background: #f2f2f2;
+      }
+      h2,
+      h3 {
+        color: #333;
+      }
+      a {
+        text-decoration: none;
+        color: #007bff;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .action-btn {
+        padding: 5px 10px;
+        margin-right: 5px;
+        border: none;
+        cursor: pointer;
+        color: #fff;
+      }
+      .approve-btn {
+        background: #28a745;
+      }
+      .deny-btn {
+        background: #dc3545;
+      }
+      .logout-btn {
+        background: #ff5733;
+        padding: 8px 15px;
+        border: none;
+        color: white;
+        cursor: pointer;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+      .adjust-form input[type="number"] {
+        width: auto;
+        margin-right: 10px;
+      }
+      .adjust-btn {
+        background: #007bff;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+    
+      .adjust-btn:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body class="admin-theme">
+    <div class="container">
+      <button class="logout-btn" onclick="logout()">Logout</button>
+      <h2>Admin Analytics Dashboard</h2>
+      <div id="analytics">
+        <!-- Analytics data will be populated here -->
+      </div>
+      <hr />
+      <h3>Manually Adjust User Credits</h3>
+      <form id="adjustForm" class="adjust-form">
+        <label>
+          User ID:
+          <input type="number" id="adjust_user_id" name="user_id" required />
+        </label>
+        <label>
+          Adjustment (e.g., 10 or -5):
+          <input type="number" id="adjustment" name="adjustment" required />
+        </label>
+        <button type="submit" class="adjust-btn">Adjust Credits</button>
+      </form>
+
+    <script>
+      function loadAnalytics() {
+        fetch("/admin/analytics")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              document.getElementById("analytics").innerText = data.error;
+              return;
+            }
+            let analyticsDiv = document.getElementById("analytics");
+
+            let scansHTML = `<h3>Scans per User</h3>
+              <table>
+                <tr>
+                  <th>User ID</th>
+                  <th>Scan Count</th>
+                </tr>`;
+            data.scans_per_user.forEach((scan) => {
+              scansHTML += `<tr>
+                              <td>${scan.user_id}</td>
+                              <td>${scan.scan_count}</td>
+                            </tr>`;
+            });
+            scansHTML += `</table>`;
+
+            let creditsHTML = `<h3>Credit Requests</h3>
+<table>
+  <tr>
+    <th>Request ID</th>
+    <th>User ID</th>
+    <th>Requested Credits</th>
+    <th>Status</th>
+    <th>Requested At</th>
+    <th>Actions</th>
+  </tr>`;
+
+data.credit_requests.forEach((req) => {
+  creditsHTML += `<tr>
+                    <td>${req.id}</td>
+                    <td>${req.user_id}</td>
+                    <td>${req.requested_credits}</td>
+                    <td id="status-${req.id}">${req.status}</td>
+                    <td>${req.created_at}</td>
+                    <td id="action-${req.id}">`;
+
+  if (req.status === "pending") {
+    creditsHTML += `<button class="action-btn approve-btn" onclick="processRequest(${req.id}, 'approve')">Approve</button>
+                    <button class="action-btn deny-btn" onclick="processRequest(${req.id}, 'deny')">Deny</button>`;
+  } else {
+    creditsHTML += `N/A`;
+  }
+
+  creditsHTML += `</td></tr>`;
+});
+
+creditsHTML += `</table>`;
+document.getElementById("analytics").innerHTML = creditsHTML;
+            
+
+            let topUsersHTML = `<h3>Top Users by Scans</h3>
+              <table>
+                <tr>
+                  <th>User ID</th>
+                  <th>Scan Count</th>
+                </tr>`;
+            data.top_users.forEach((user) => {
+              topUsersHTML += `<tr>
+                                <td>${user.user_id}</td>
+                                <td>${user.scan_count}</td>
+                              </tr>`;
+            });
+            topUsersHTML += `</table>`;
+
+            analyticsDiv.innerHTML = scansHTML + creditsHTML + topUsersHTML;
+          })
+          .catch((err) => {
+            console.error("Error loading analytics:", err);
+            document.getElementById("analytics").innerText =
+              "Error loading analytics.";
+          });
+      }
+
+      function processRequest(reqId, action) {
+        fetch(`/admin/credit_request/${reqId}/${action}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error("Server Error:", data.error);
+                alert("Error: " + data.error);
+            } else {
+                alert(data.message);
+                
+                // Update status in the UI immediately
+                let statusCell = document.getElementById(`status-${reqId}`);
+                if (statusCell) {
+                    statusCell.innerText = action === "approve" ? "approved" : "denied";
+                }
+    
+                // Remove action buttons since the request is no longer pending
+                let actionCell = document.getElementById(`action-${reqId}`);
+                if (actionCell) {
+                    actionCell.innerHTML = "N/A"; 
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Fetch Error:", err);
+            alert("Error processing request.");
+        });
+    }
+    
+      function logout() {
+        // Redirect to the login page immediately
+        window.location.href = "/login";
+      
+        // Send logout request to the server in the background
+        fetch("/logout", { method: "POST" })
+          .catch((err) => console.error("Error logging out:", err));
+      }
+      
+
+      document
+        .getElementById("adjustForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          let formData = new FormData(e.target);
+          fetch("/admin/adjust_credits", {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              alert(data.message || data.error);
+              loadAnalytics();
+            })
+            .catch((err) => {
+              console.error("Error adjusting credits:", err);
+              alert("Error adjusting credits.");
+            });
+        });
+
+      loadAnalytics();
+    </script>
+  </body>
+</html>

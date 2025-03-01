@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <title>Document Matches</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9f9f9;
+      }
+      .container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px #ccc;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ccc;
+        text-align: left;
+      }
+      a {
+        text-decoration: none;
+        color: #007bff;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body class="matches-theme">
+    <div class="container">
+      <h2>Document Matches</h2>
+      <table id="matchesTable">
+        <tr>
+          <th>ID</th>
+          <th>Filename</th>
+          <th>Similarity</th>
+        </tr>
+      </table>
+      <p><a href="{{ url_for('profile_page')}}">Back to Profile</a></p>
+    </div>
+
+    <script>
+      // Extract the document ID from URL query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const docId = urlParams.get("docId");
+
+      // Fetch matching documents from the API
+      fetch("/matches/" + docId)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          const table = document.getElementById("matchesTable");
+          data.matches.forEach((match) => {
+            const row = table.insertRow();
+            row.insertCell(0).innerText = match.id;
+            row.insertCell(1).innerText = match.filename;
+            row.insertCell(2).innerText = match.similarity;
+          });
+        })
+        .catch((err) => {
+          console.error("Error fetching matches:", err);
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <title>User Profile</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #eef;
+      }
+      .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 5px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      a {
+        text-decoration: none;
+        color: #007bff;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .logout-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-top: 15px;
+        background: #dc3545;
+        color: white;
+        text-align: center;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .logout-btn:hover {
+        background: #c82333;
+      }
+    </style>
+  </head>
+  <body class="profile-theme">
+    <div class="container">
+      <h2>Your Profile</h2>
+      <p><strong>Username:</strong> <span id="username"></span></p>
+      <p><strong>Role:</strong> <span id="role"></span></p>
+      <p><strong>Available Credits:</strong> <span id="credits"></span></p>
+
+      <h3>Your Documents</h3>
+      <table id="docsTable">
+        <tr>
+          <th>ID</th>
+          <th>Filename</th>
+          <th>Uploaded At</th>
+          <th>Action</th>
+        </tr>
+      </table>
+
+      <h3>Your Credit Requests</h3>
+      <table id="creditsTable">
+        <tr>
+          <th>ID</th>
+          <th>Requested Credits</th>
+          <th>Status</th>
+          <th>Requested At</th>
+        </tr>
+      </table>
+
+      <p><a href="{{ url_for('upload_page')}}">Upload New Document</a></p>
+      <p>
+        <a href="{{ url_for('credit_request_page')}}"
+          >Request Additional Credits</a
+        >
+      </p>
+
+      <p id="adminDashboard" style="display: none">
+        <a href="{{ url_for('admin_dashboard_page') }}">Admin Dashboard</a>
+        (Admins only)
+      </p>
+
+      <!-- Logout Button -->
+      <button class="logout-btn" id="logoutButton">Logout</button>
+    </div>
+
+    <script>
+      // Fetch profile data from the backend
+      fetch("/user/profile")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            alert(data.error);
+            window.location.href = "{{ url_for('login_page')}}";
+          } else {
+            document.getElementById("username").innerText = data.username;
+            document.getElementById("role").innerText = data.role;
+            document.getElementById("credits").innerText = data.credits;
+
+            // Show admin dashboard link only if user is an admin
+            if (data.role === "admin") {
+              document.getElementById("adminDashboard").style.display = "block";
+            }
+
+            // Populate documents table
+            let docsTable = document.getElementById("docsTable");
+            data.documents.forEach((doc) => {
+              let row = docsTable.insertRow();
+              row.insertCell(0).innerText = doc.id;
+              row.insertCell(1).innerText = doc.filename;
+              row.insertCell(2).innerText = doc.created_at;
+              let actionCell = row.insertCell(3);
+              let viewLink = document.createElement("a");
+              viewLink.href = "{{ url_for('matches_page') }}?docId=" + doc.id;
+              viewLink.innerText = "View Matches";
+              actionCell.appendChild(viewLink);
+            });
+
+            // Populate credit requests table
+            let creditsTable = document.getElementById("creditsTable");
+            data.credit_requests.forEach((req) => {
+              let row = creditsTable.insertRow();
+              row.insertCell(0).innerText = req.id;
+              row.insertCell(1).innerText = req.requested_credits;
+              row.insertCell(2).innerText = req.status;
+              row.insertCell(3).innerText = req.created_at;
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Error:", err);
+        });
+
+      // Logout function
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", function () {
+          fetch("/auth/logout", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "Logged out successfully") {
+                window.location.href = "{{ url_for('login_page') }}";
+              } else {
+                alert("Logout failed. Try again.");
+              }
+            })
+            .catch((err) => {
+              console.error("Logout Error:", err);
+            });
+        });
+    </script>
+  </body>
+</html>
