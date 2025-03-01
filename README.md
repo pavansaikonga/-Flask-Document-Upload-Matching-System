@@ -122,7 +122,7 @@ http://127.0.0.1:5000
 | ------------------ | --------------------------------------- | -------------------------------- |
 | SECRET_KEY         | Flask secret key for session management | 'your_secret_key'                |
 | UPLOAD_FOLDER      | Path to store uploaded files            | 'uploads'                        |
-| ALLOWED_EXTENSIONS | Allowed file types for upload           | {txt, pdf, doc, docx, xlsx, csv} |
+| ALLOWED_EXTENSIONS | Allowed file types for upload           | {txt} |
 
 ## 🛠 Technology Stack
 
