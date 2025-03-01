@@ -100,9 +100,21 @@ http://127.0.0.1:5000
 - Users can request additional credits via the request page.
 - Admins can approve/reject these requests.
 
+
+### 1️⃣Admin Login Details
+
+- There is a separate log in for admin account.
+- After logging in, they are redirected to their Admin Dashboard page.
+- Admin login credentials:
+- user name : admin
+- password : admin123
+
 ### 4️⃣ Admin Panel
 
 - Admins can manage users, view files, and approve/reject credit requests.
+
+
+
 
 ## 🔧 Environment Variables (Optional)
 
